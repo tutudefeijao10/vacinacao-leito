@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Cidadão: Saúde no ES</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Cores amigáveis e de alto contraste */
+            --bg-page: #f0f4f8;
+            --surface: #ffffff;
+            --primary: #2563eb;       /* Azul app */
+            --primary-hover: #1d4ed8;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            
+            /* Cores de Status para rápido entendimento visual */
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --warning-bg: #fef9c3;
+            --warning-text: #854d0e;
+            --danger-bg: #fee2e2;
+            --danger-text: #991b1b;
+            
+            --radius-lg: 24px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* CABEÇALHO CONSUMIDOR */
+        header {
+            background: var(--surface);
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+            animation: fadeInDown 0.5s ease;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            margin: 0.5rem 0 0 0;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        /* NAVEGAÇÃO ESTILO APP */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            background: var(--surface);
+            padding: 8px;
+            border-radius: 100px;
+            width: fit-content;
+            margin: 0 auto 2rem auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background: var(--bg-page);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+
+        /* CARDS MODERNOS */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            color: var(--text-main);
+            font-weight: 700;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        /* BARRA DE PESQUISA AMIGÁVEL */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .search-wrapper input {
+            width: 100%;
+            padding: 14px 20px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 100px;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            background: #f8fafc;
+        }
+
+        .search-wrapper input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            background: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.2rem;
+        }
+
+        /* TABELAS PARA CONSUMIDOR (Fácil visualização) */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            /* Sombra interna leve para indicar rolagem */
+            box-shadow: inset 0 0 0 1px #f1f5f9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 800px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            vertical-align: middle;
+        }
+
+        tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        /* ETiquetas / BADGES VISUAIS */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            gap: 6px;
+        }
+
+        .status-good { background: var(--success-bg); color: var(--success-text); }
+        .status-warn { background: var(--warning-bg); color: var(--warning-text); }
+        .status-crit { background: var(--danger-bg); color: var(--danger-text); }
+        .status-neutral { background: #e2e8f0; color: #475569; }
+
+        .municipio-nome {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .regiao-tag {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        /* Lógica de exibição das abas */
+        .table-section { display: none; opacity: 0; }
+        .table-section.active { display: block; animation: fadeIn 0.5s ease-out forwards; }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 3rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Painel Cidadão: Saúde no ES</h1>
+    <p>Acompanhe a vacinação e a infraestrutura hospitalar do seu município</p>
+</header>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showSection('dashboards', this)">Visão Geral</button>
+        <button class="tab-btn" onclick="showSection('vacinacao', this)">Vacinação Geral</button>
+        <button class="tab-btn" onclick="showSection('leitos', this)">Leitos Hospitalares</button>
+    </div>
+
+    <div id="dashboards" class="table-section active">
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Média de Vacinação por Região (%)</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartVacina"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Média de Leitos (por mil hab.)</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartLeitos"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Resumo Regional</h3>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Região de Saúde</th>
+                            <th>Pólio</th>
+                            <th>Tríplice Viral</th>
+                            <th>BCG</th>
+                            <th>Leitos/Mil Hab.</th>
+                            <th>Avaliação (Pólio)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summaryBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="vacinacao" class="table-section">
+        <div class="card">
+            <div class="card-header">
+                <h3>Dados de Vacinação por Município (2022)</h3>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchVac" placeholder="Procurar" onkeyup="filterTable('searchVac', 'tableVac')">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table id="tableVac">
+                    <thead>
+                        <tr>
+                            <th>Município</th>
+                            <th>Região</th>
+                            <th>Pólio</th>
+                            <th>Tríplice Viral</th>
+                            <th>BCG</th>
+                            <th>Meta Ideal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vacBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="leitos" class="table-section">
+        <div class="card">
+            <div class="card-header">
+                <h3>Infraestrutura de Leitos (2023)</h3>
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchLei" placeholder="Qual é o seu município?" onkeyup="filterTable('searchLei', 'tableLei')">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table id="tableLei">
+                    <thead>
+                        <tr>
+                            <th>Município</th>
+                            <th>Região</th>
+                            <th>Total de Leitos</th>
+                            <th>Leitos por Mil Habitantes</th>
+                            <th>Situação OMS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leiBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    Projeto Integrador - Saúde Pública ES | Turma: INNI2 - G1<br>
+    Desenvolvido por: Arthur Souza Dias, Davi Machado Alves, Davi Ribeiro Soares
+</footer>
+
+<script>
+    // DADOS ORIGINAIS
+    const dataVac = [{"municipio": "Afonso Cl\u00e1udio", "regiao_saude": "Metropolitana", "populacao_2022": "30603", "polio_2019": 91.4, "polio_2020": 72.8, "polio_2021": 73.3, "polio_2022": 73.7, "triplice_viral_2019": 98.9, "triplice_viral_2020": 80.2, "triplice_viral_2021": 78.5, "triplice_viral_2022": 87.4, "bcg_2022": 95.9, "meta_cobertura_pct": 95}, {"municipio": "\u00c1gua Doce do Norte", "regiao_saude": "Central Norte", "populacao_2022": "12402", "polio_2019": 91.0, "polio_2020": 69.9, "polio_2021": 70.8, "polio_2022": 54.3, "triplice_viral_2019": 85.9, "triplice_viral_2020": 77.7, "triplice_viral_2021": 72.8, "triplice_viral_2022": 81.6, "bcg_2022": 88.4, "meta_cobertura_pct": 95}, {"municipio": "\u00c1guia Branca", "regiao_saude": "Central Norte", "populacao_2022": "9714", "polio_2019": 92.6, "polio_2020": 81.1, "polio_2021": 64.7, "polio_2022": 64.0, "triplice_viral_2019": 81.9, "triplice_viral_2020": 81.9, "triplice_viral_2021": 74.9, "triplice_viral_2022": 84.9, "bcg_2022": 79.07, "meta_cobertura_pct": 95}, {"municipio": "Alegre", "regiao_saude": "Sul", "populacao_2022": "31403", "polio_2019": 87.3, "polio_2020": 87.3, "polio_2021": 74.5, "polio_2022": 56.8, "triplice_viral_2019": 95.6, "triplice_viral_2020": 81.6, "triplice_viral_2021": 83.8, "triplice_viral_2022": 82.6, "bcg_2022": 97.5, "meta_cobertura_pct": 95}, {"municipio": "Alfredo Chaves", "regiao_saude": "Sul", "populacao_2022": "13,836", "polio_2019": 107.97, "polio_2020": 113.77, "polio_2021": 76.77, "polio_2022": 134.13, "triplice_viral_2019": 112.32, "triplice_viral_2020": 124.64, "triplice_viral_2021": 80.0, "triplice_viral_2022": 74.6, "bcg_2022": 65.87, "meta_cobertura_pct": 95}, {"municipio": "Alto Rio Novo", "regiao_saude": "Central Norte", "populacao_2022": "7831", "polio_2019": 83.5, "polio_2020": 69.3, "polio_2021": 68.2, "polio_2022": 72.8, "triplice_viral_2019": 87.2, "triplice_viral_2020": 82.2, "triplice_viral_2021": 82.2, "triplice_viral_2022": 81.1, "bcg_2022": 87.6, "meta_cobertura_pct": 95}, {"municipio": "Anchieta", "regiao_saude": "Sul", "populacao_2022": "26703", "polio_2019": 107.1, "polio_2020": 75.0, "polio_2021": 81.4, "polio_2022": 62.9, "triplice_viral_2019": 94.7, "triplice_viral_2020": 77.7, "triplice_viral_2021": 71.6, "triplice_viral_2022": 90.8, "bcg_2022": 89.1, "meta_cobertura_pct": 95}, {"municipio": "Apiac\u00e1", "regiao_saude": "Sul", "populacao_2022": "8203", "polio_2019": 87.5, "polio_2020": 73.2, "polio_2021": 77.5, "polio_2022": 60.7, "triplice_viral_2019": 92.8, "triplice_viral_2020": 75.2, "triplice_viral_2021": 71.0, "triplice_viral_2022": 77.7, "bcg_2022": 85.8, "meta_cobertura_pct": 95}, {"municipio": "Aracruz", "regiao_saude": "Metropolitana", "populacao_2022": "104942", "polio_2019": 100.9, "polio_2020": 85.9, "polio_2021": 71.6, "polio_2022": 74.1, "triplice_viral_2019": 90.3, "triplice_viral_2020": 83.3, "triplice_viral_2021": 74.7, "triplice_viral_2022": 90.9, "bcg_2022": 90.6, "meta_cobertura_pct": 95}, {"municipio": "At\u00edlio Viv\u00e1cqua", "regiao_saude": "Sul", "populacao_2022": "10,540", "polio_2019": 111.43, "polio_2020": 95.0, "polio_2021": 98.66, "polio_2022": 84.21, "triplice_viral_2019": 100.71, "triplice_viral_2020": 114.29, "triplice_viral_2021": 97.32, "triplice_viral_2022": 98.03, "bcg_2022": 67.11, "meta_cobertura_pct": 95}, {"municipio": "Baixo Guandu", "regiao_saude": "Central Norte", "populacao_2022": "29803", "polio_2019": 97.5, "polio_2020": 83.2, "polio_2021": 78.8, "polio_2022": 63.3, "triplice_viral_2019": 91.4, "triplice_viral_2020": 86.0, "triplice_viral_2021": 85.5, "triplice_viral_2022": 85.9, "bcg_2022": 97.0, "meta_cobertura_pct": 95}, {"municipio": "Barra de S\u00e3o Francisco", "regiao_saude": "Noroeste", "populacao_2022": "45301", "polio_2019": 84.29, "polio_2020": 63.9, "polio_2021": 92.51, "polio_2022": 71.43, "triplice_viral_2019": 93.2, "triplice_viral_2020": 65.71, "triplice_viral_2021": 84.24, "triplice_viral_2022": 74.41, "bcg_2022": 67.11, "meta_cobertura_pct": 95}, {"municipio": "Boa Esperan\u00e7a", "regiao_saude": "Central Norte", "populacao_2022": "19203", "polio_2019": 82.6, "polio_2020": 72.4, "polio_2021": 75.2, "polio_2022": 59.4, "triplice_viral_2019": 88.1, "triplice_viral_2020": 67.8, "triplice_viral_2021": 82.5, "triplice_viral_2022": 82.5, "bcg_2022": 84.7, "meta_cobertura_pct": 95}, {"municipio": "Bom Jesus do Norte", "regiao_saude": "Sul", "populacao_2022": "9803", "polio_2019": 97.0, "polio_2020": 82.0, "polio_2021": 65.8, "polio_2022": 60.6, "triplice_viral_2019": 91.0, "triplice_viral_2020": 81.1, "triplice_viral_2021": 78.0, "triplice_viral_2022": 85.9, "bcg_2022": 83.3, "meta_cobertura_pct": 95}, {"municipio": "Brejetuba", "regiao_saude": "Metropolitana", "populacao_2022": "12987", "polio_2019": 86.9, "polio_2020": 70.7, "polio_2021": 63.0, "polio_2022": 60.1, "triplice_viral_2019": 85.6, "triplice_viral_2020": 80.9, "triplice_viral_2021": 82.4, "triplice_viral_2022": 85.3, "bcg_2022": 91.7, "meta_cobertura_pct": 95}, {"municipio": "Cachoeiro de Itapemirim", "regiao_saude": "Sul", "populacao_2022": "212172", "polio_2019": 93.44, "polio_2020": 78.19, "polio_2021": 73.21, "polio_2022": 77.46, "triplice_viral_2019": 94.24, "triplice_viral_2020": 88.22, "triplice_viral_2021": 77.39, "triplice_viral_2022": 77.54, "bcg_2022": 103.88, "meta_cobertura_pct": 95}, {"municipio": "Cariacica", "regiao_saude": "Metropolitana", "populacao_2022": "406542", "polio_2019": 91.4, "polio_2020": 79.5, "polio_2021": 81.0, "polio_2022": 71.1, "triplice_viral_2019": 92.8, "triplice_viral_2020": 85.8, "triplice_viral_2021": 83.5, "triplice_viral_2022": 82.6, "bcg_2022": 93.2, "meta_cobertura_pct": 95}, {"municipio": "Castelo", "regiao_saude": "Sul", "populacao_2022": "37803", "polio_2019": 88.5, "polio_2020": 79.8, "polio_2021": 83.1, "polio_2022": 75.2, "triplice_viral_2019": 99.1, "triplice_viral_2020": 77.9, "triplice_viral_2021": 84.3, "triplice_viral_2022": 142.3, "bcg_2022": 88.0, "meta_cobertura_pct": 95}, {"municipio": "Colatina", "regiao_saude": "Centro-oeste", "populacao_2022": "124283", "polio_2019": 59.18, "polio_2020": 23.87, "polio_2021": 53.02, "polio_2022": 44.79, "triplice_viral_2019": 91.2, "triplice_viral_2020": 24.0, "triplice_viral_2021": 60.7, "triplice_viral_2022": 43.6, "bcg_2022": 14.87, "meta_cobertura_pct": 95}, {"municipio": "Concei\u00e7\u00e3o da Barra", "regiao_saude": "Central Norte", "populacao_2022": "45280", "polio_2019": 98.9, "polio_2020": 77.9, "polio_2021": 76.1, "polio_2022": 68.2, "triplice_viral_2019": 96.0, "triplice_viral_2020": 83.7, "triplice_viral_2021": 81.1, "triplice_viral_2022": 84.3, "bcg_2022": 94.7, "meta_cobertura_pct": 95}, {"municipio": "Concei\u00e7\u00e3o do Castelo", "regiao_saude": "Metropolitana", "populacao_2022": "17482", "polio_2019": 97.5, "polio_2020": 81.7, "polio_2021": 64.3, "polio_2022": 53.6, "triplice_viral_2019": 82.3, "triplice_viral_2020": 70.9, "triplice_viral_2021": 83.7, "triplice_viral_2022": 84.8, "bcg_2022": 90.6, "meta_cobertura_pct": 95}, {"municipio": "Divino de S\u00e3o Louren\u00e7o", "regiao_saude": "Sul", "populacao_2022": "5803", "polio_2019": 90.7, "polio_2020": 70.6, "polio_2021": 64.7, "polio_2022": 70.3, "triplice_viral_2019": 87.0, "triplice_viral_2020": 79.7, "triplice_viral_2021": 72.4, "triplice_viral_2022": 81.2, "bcg_2022": 92.9, "meta_cobertura_pct": 95}, {"municipio": "Domingos Martins", "regiao_saude": "Sudoeste", "populacao_2022": "34120", "polio_2019": 98.93, "polio_2020": 107.2, "polio_2021": 90.89, "polio_2022": 77.07, "triplice_viral_2019": 101.92, "triplice_viral_2020": 117.95, "triplice_viral_2021": 99.21, "triplice_viral_2022": 87.69, "bcg_2022": 41.4, "meta_cobertura_pct": 95}, {"municipio": "Dores do Rio Preto", "regiao_saude": "Sul", "populacao_2022": "7803", "polio_2019": 95.9, "polio_2020": 82.8, "polio_2021": 75.4, "polio_2022": 60.8, "triplice_viral_2019": 89.3, "triplice_viral_2020": 78.4, "triplice_viral_2021": 73.9, "triplice_viral_2022": 79.8, "bcg_2022": 94.87, "meta_cobertura_pct": 95}, {"municipio": "Ecoporanga", "regiao_saude": "Central Norte", "populacao_2022": "25314", "polio_2019": 98.8, "polio_2020": 83.0, "polio_2021": 69.3, "polio_2022": 73.9, "triplice_viral_2019": 99.2, "triplice_viral_2020": 79.0, "triplice_viral_2021": 81.4, "triplice_viral_2022": 91.8, "bcg_2022": 94.0, "meta_cobertura_pct": 95}, {"municipio": "Fund\u00e3o", "regiao_saude": "Metropolitana", "populacao_2022": "22379", "polio_2019": 96.64, "polio_2020": 44.78, "polio_2021": 34.46, "polio_2022": 79.47, "triplice_viral_2019": 110.07, "triplice_viral_2020": 49.63, "triplice_viral_2021": 34.08, "triplice_viral_2022": 78.33, "bcg_2022": 50.19, "meta_cobertura_pct": 95}, {"municipio": "Governador Lindenberg", "regiao_saude": "Central Norte", "populacao_2022": "11620", "polio_2019": 97.2, "polio_2020": 76.7, "polio_2021": 80.9, "polio_2022": 63.4, "triplice_viral_2019": 83.1, "triplice_viral_2020": 79.9, "triplice_viral_2021": 69.3, "triplice_viral_2022": 85.1, "bcg_2022": 80.7, "meta_cobertura_pct": 95}, {"municipio": "Gua\u00e7u\u00ed", "regiao_saude": "Sul", "populacao_2022": "24603", "polio_2019": 89.72, "polio_2020": 75.3, "polio_2021": 66.2, "polio_2022": 62.0, "triplice_viral_2019": 88.9, "triplice_viral_2020": 71.2, "triplice_viral_2021": 86.1, "triplice_viral_2022": 85.6, "bcg_2022": 85.0, "meta_cobertura_pct": 95}, {"municipio": "Guarapari", "regiao_saude": "Metropolitana", "populacao_2022": "128504", "polio_2019": 84.42, "polio_2020": 65.58, "polio_2021": 57.97, "polio_2022": 73.08, "triplice_viral_2019": 96.56, "triplice_viral_2020": 70.94, "triplice_viral_2021": 62.16, "triplice_viral_2022": 79.32, "bcg_2022": 65.53, "meta_cobertura_pct": 95}, {"municipio": "Ibatiba", "regiao_saude": "Metropolitana", "populacao_2022": "21304", "polio_2019": 93.5, "polio_2020": 80.4, "polio_2021": 71.2, "polio_2022": 72.4, "triplice_viral_2019": 86.0, "triplice_viral_2020": 82.7, "triplice_viral_2021": 75.1, "triplice_viral_2022": 83.1, "bcg_2022": 91.1, "meta_cobertura_pct": 95}, {"municipio": "Ibira\u00e7u", "regiao_saude": "Metropolitana", "populacao_2022": "12890", "polio_2019": 85.9, "polio_2020": 110.69, "polio_2021": 64.2, "polio_2022": 71.4, "triplice_viral_2019": 92.3, "triplice_viral_2020": 68.7, "triplice_viral_2021": 73.8, "triplice_viral_2022": 88.8, "bcg_2022": 88.1, "meta_cobertura_pct": 95}, {"municipio": "Ibitirama", "regiao_saude": "Sudoeste", "populacao_2022": "8830", "polio_2019": 95.15, "polio_2020": 53.33, "polio_2021": 24.09, "polio_2022": 61.81, "triplice_viral_2019": 104.85, "triplice_viral_2020": 57.58, "triplice_viral_2021": 29.2, "triplice_viral_2022": 64.58, "bcg_2022": 61.11, "meta_cobertura_pct": 95}, {"municipio": "Iconha", "regiao_saude": "Sul", "populacao_2022": "13803", "polio_2019": 93.4, "polio_2020": 69.2, "polio_2021": 65.2, "polio_2022": 55.7, "triplice_viral_2019": 89.1, "triplice_viral_2020": 66.1, "triplice_viral_2021": 76.3, "triplice_viral_2022": 81.8, "bcg_2022": 85.6, "meta_cobertura_pct": 95}, {"municipio": "Irupi", "regiao_saude": "Sul", "populacao_2022": "12403", "polio_2019": 3.4, "polio_2020": 71.3, "polio_2021": 73.9, "polio_2022": 72.4, "triplice_viral_2019": 83.7, "triplice_viral_2020": 79.5, "triplice_viral_2021": 82.4, "triplice_viral_2022": 87.0, "bcg_2022": 86.7, "meta_cobertura_pct": 95}, {"municipio": "Itagua\u00e7u", "regiao_saude": "Metropolitana", "populacao_2022": "14320", "polio_2019": 86.4, "polio_2020": 80.4, "polio_2021": 65.5, "polio_2022": 65.8, "triplice_viral_2019": 88.8, "triplice_viral_2020": 82.3, "triplice_viral_2021": 71.8, "triplice_viral_2022": 88.3, "bcg_2022": 91.7, "meta_cobertura_pct": 95}, {"municipio": "Itapemirim", "regiao_saude": "Sul", "populacao_2022": "34957", "polio_2019": 86.27, "polio_2020": 83.5, "polio_2021": 36.94, "polio_2022": 66.14, "triplice_viral_2019": 98.86, "triplice_viral_2020": 83.17, "triplice_viral_2021": 32.9, "triplice_viral_2022": 68.84, "bcg_2022": 71.86, "meta_cobertura_pct": 95}, {"municipio": "Itarana", "regiao_saude": "Metropolitana", "populacao_2022": "11018", "polio_2019": 94.0, "polio_2020": 85.0, "polio_2021": 73.1, "polio_2022": 67.6, "triplice_viral_2019": 89.9, "triplice_viral_2020": 81.6, "triplice_viral_2021": 82.2, "triplice_viral_2022": 79.2, "bcg_2022": 93.0, "meta_cobertura_pct": 95}, {"municipio": "I\u00fana", "regiao_saude": "Sul", "populacao_2022": "23403", "polio_2019": 88.0, "polio_2020": 78.4, "polio_2021": 70.5, "polio_2022": 67.4, "triplice_viral_2019": 93.4, "triplice_viral_2020": 69.1, "triplice_viral_2021": 86.6, "triplice_viral_2022": 82.4, "bcg_2022": 84.5, "meta_cobertura_pct": 95}, {"municipio": "Jaguar\u00e9", "regiao_saude": "Central Norte", "populacao_2022": "27503", "polio_2019": 89.9, "polio_2020": 80.4, "polio_2021": 71.2, "polio_2022": 65.5, "triplice_viral_2019": 96.4, "triplice_viral_2020": 69.4, "triplice_viral_2021": 74.0, "triplice_viral_2022": 89.0, "bcg_2022": 96.2, "meta_cobertura_pct": 95}, {"municipio": "Jer\u00f4nimo Monteiro", "regiao_saude": "Sul", "populacao_2022": "11803", "polio_2019": 92.1, "polio_2020": 81.6, "polio_2021": 80.3, "polio_2022": 60.5, "triplice_viral_2019": 85.2, "triplice_viral_2020": 69.6, "triplice_viral_2021": 70.6, "triplice_viral_2022": 85.4, "bcg_2022": 91.3, "meta_cobertura_pct": 95}, {"municipio": "Jo\u00e3o Neiva", "regiao_saude": "Nordeste", "populacao_2022": "16774", "polio_2019": 133.01, "polio_2020": 76.8, "polio_2021": 113.45, "polio_2022": 75.0, "triplice_viral_2019": 94.85, "triplice_viral_2020": 71.13, "triplice_viral_2021": 104.09, "triplice_viral_2022": 79.79, "bcg_2022": 50.0, "meta_cobertura_pct": 95}, {"municipio": "Laranja da Terra", "regiao_saude": "Metropolitana", "populacao_2022": "11640", "polio_2019": 96.5, "polio_2020": 80.4, "polio_2021": 70.5, "polio_2022": 67.3, "triplice_viral_2019": 144.32, "triplice_viral_2020": 68.7, "triplice_viral_2021": 74.6, "triplice_viral_2022": 77.9, "bcg_2022": 84.0, "meta_cobertura_pct": 95}, {"municipio": "Linhares", "regiao_saude": "Norte", "populacao_2022": "179755", "polio_2019": 65.49, "polio_2020": 73.06, "polio_2021": 61.48, "polio_2022": 83.01, "triplice_viral_2019": 73.34, "triplice_viral_2020": 75.52, "triplice_viral_2021": 64.77, "triplice_viral_2022": 86.05, "bcg_2022": 18.43, "meta_cobertura_pct": 95}, {"municipio": "Manten\u00f3polis", "regiao_saude": "Oeste", "populacao_2022": "15653", "polio_2019": 105.17, "polio_2020": 96.55, "polio_2021": 93.25, "polio_2022": 50.83, "triplice_viral_2019": 104.6, "triplice_viral_2020": 92.53, "triplice_viral_2021": 109.82, "triplice_viral_2022": 70.17, "bcg_2022": 28.73, "meta_cobertura_pct": 95}, {"municipio": "Marata\u00edzes", "regiao_saude": "Sul", "populacao_2022": "39203", "polio_2019": 89.5, "polio_2020": 85.6, "polio_2021": 67.7, "polio_2022": 55.7, "triplice_viral_2019": 98.4, "triplice_viral_2020": 83.8, "triplice_viral_2021": 73.5, "triplice_viral_2022": 92.3, "bcg_2022": 93.1, "meta_cobertura_pct": 95}, {"municipio": "Marechal Floriano", "regiao_saude": "Metropolitana", "populacao_2022": "16214", "polio_2019": 82.5, "polio_2020": 83.0, "polio_2021": 66.2, "polio_2022": 68.3, "triplice_viral_2019": 83.5, "triplice_viral_2020": 82.3, "triplice_viral_2021": 68.7, "triplice_viral_2022": 82.0, "bcg_2022": 94.5, "meta_cobertura_pct": 95}, {"municipio": "Maril\u00e2ndia", "regiao_saude": "Central Norte", "populacao_2022": "11402", "polio_2019": 88.6, "polio_2020": 70.1, "polio_2021": 67.1, "polio_2022": 61.7, "triplice_viral_2019": 88.1, "triplice_viral_2020": 76.6, "triplice_viral_2021": 74.1, "triplice_viral_2022": 79.2, "bcg_2022": 30.3, "meta_cobertura_pct": 95}, {"municipio": "Mimoso do Sul", "regiao_saude": "Sul", "populacao_2022": "26803", "polio_2019": 93.1, "polio_2020": 83.3, "polio_2021": 67.8, "polio_2022": 67.9, "triplice_viral_2019": 97.9, "triplice_viral_2020": 71.8, "triplice_viral_2021": 79.0, "triplice_viral_2022": 91.6, "bcg_2022": 86.7, "meta_cobertura_pct": 95}, {"municipio": "Montanha", "regiao_saude": "Norte", "populacao_2022": "18954", "polio_2019": 91.14, "polio_2020": 101.5, "polio_2021": 95.91, "polio_2022": 137.41, "triplice_viral_2019": 100.37, "triplice_viral_2020": 104.06, "triplice_viral_2021": 106.69, "triplice_viral_2022": 111.87, "bcg_2022": 87.77, "meta_cobertura_pct": 95}, {"municipio": "Mucurici", "regiao_saude": "Central Norte", "populacao_2022": "7803", "polio_2019": 89.13, "polio_2020": 70.2, "polio_2021": 72.2, "polio_2022": 69.0, "triplice_viral_2019": 94.3, "triplice_viral_2020": 80.9, "triplice_viral_2021": 69.4, "triplice_viral_2022": 80.2, "bcg_2022": 83.8, "meta_cobertura_pct": 95}, {"municipio": "Muniz Freire", "regiao_saude": "Sul", "populacao_2022": "17176", "polio_2019": 94.62, "polio_2020": 105.77, "polio_2021": 82.58, "polio_2022": 94.17, "triplice_viral_2019": 100.77, "triplice_viral_2020": 110.77, "triplice_viral_2021": 96.59, "triplice_viral_2022": 87.92, "bcg_2022": 89.58, "meta_cobertura_pct": 95}, {"municipio": "Muqui", "regiao_saude": "Sul", "populacao_2022": "14603", "polio_2019": 92.8, "polio_2020": 74.3, "polio_2021": 73.0, "polio_2022": 57.8, "triplice_viral_2019": 86.0, "triplice_viral_2020": 75.7, "triplice_viral_2021": 76.1, "triplice_viral_2022": 78.4, "bcg_2022": 89.4, "meta_cobertura_pct": 95}, {"municipio": "Nova Ven\u00e9cia", "regiao_saude": "Central Norte", "populacao_2022": "47214", "polio_2019": 100.4, "polio_2020": 78.2, "polio_2021": 71.6, "polio_2022": 74.2, "triplice_viral_2019": 94.5, "triplice_viral_2020": 72.0, "triplice_viral_2021": 85.8, "triplice_viral_2022": 88.9, "bcg_2022": 84.5, "meta_cobertura_pct": 95}, {"municipio": "Pancas", "regiao_saude": "Central Norte", "populacao_2022": "22814", "polio_2019": 93.8, "polio_2020": 73.9, "polio_2021": 72.5, "polio_2022": 58.8, "triplice_viral_2019": 90.7, "triplice_viral_2020": 81.3, "triplice_viral_2021": 79.9, "triplice_viral_2022": 83.2, "bcg_2022": 85.1, "meta_cobertura_pct": 95}, {"municipio": "Pedro Can\u00e1rio", "regiao_saude": "Central Norte", "populacao_2022": "26503", "polio_2019": 100.6, "polio_2020": 76.8, "polio_2021": 68.5, "polio_2022": 57.2, "triplice_viral_2019": 97.3, "triplice_viral_2020": 69.0, "triplice_viral_2021": 86.4, "triplice_viral_2022": 91.5, "bcg_2022": 87.8, "meta_cobertura_pct": 95}, {"municipio": "Pinheiros", "regiao_saude": "Central Norte", "populacao_2022": "24803", "polio_2019": 87.8, "polio_2020": 71.7, "polio_2021": 66.5, "polio_2022": 59.9, "triplice_viral_2019": 90.0, "triplice_viral_2020": 73.3, "triplice_viral_2021": 86.4, "triplice_viral_2022": 88.6, "bcg_2022": 90.4, "meta_cobertura_pct": 95}, {"municipio": "Pi\u00fama", "regiao_saude": "Sul", "populacao_2022": "24603", "polio_2019": 95.8, "polio_2020": 71.8, "polio_2021": 81.2, "polio_2022": 70.2, "triplice_viral_2019": 92.2, "triplice_viral_2020": 78.8, "triplice_viral_2021": 77.4, "triplice_viral_2022": 87.5, "bcg_2022": 93.4, "meta_cobertura_pct": 95}, {"municipio": "Ponto Belo", "regiao_saude": "Central Norte", "populacao_2022": "8904", "polio_2019": 86.7, "polio_2020": 73.3, "polio_2021": 65.0, "polio_2022": 63.6, "triplice_viral_2019": 82.4, "triplice_viral_2020": 66.1, "triplice_viral_2021": 72.4, "triplice_viral_2022": 84.7, "bcg_2022": 84.4, "meta_cobertura_pct": 95}, {"municipio": "Presidente Kennedy", "regiao_saude": "Sul", "populacao_2022": "11203", "polio_2019": 86.4, "polio_2020": 78.4, "polio_2021": 66.7, "polio_2022": 66.3, "triplice_viral_2019": 88.8, "triplice_viral_2020": 76.4, "triplice_viral_2021": 72.3, "triplice_viral_2022": 86.6, "bcg_2022": 82.3, "meta_cobertura_pct": 95}, {"municipio": "Rio Bananal", "regiao_saude": "Norte", "populacao_2022": "19398", "polio_2019": 114.36, "polio_2020": 153.96, "polio_2021": 88.1, "polio_2022": 102.16, "triplice_viral_2019": 123.76, "triplice_viral_2020": 174.26, "triplice_viral_2021": 115.99, "triplice_viral_2022": 94.24, "bcg_2022": 35.25, "meta_cobertura_pct": 95}, {"municipio": "Rio Novo do Sul", "regiao_saude": "Sul", "populacao_2022": "12603", "polio_2019": 81.8, "polio_2020": 76.0, "polio_2021": 79.9, "polio_2022": 89.23, "triplice_viral_2019": 87.6, "triplice_viral_2020": 79.8, "triplice_viral_2021": 80.2, "triplice_viral_2022": 83.4, "bcg_2022": 83.9, "meta_cobertura_pct": 95}, {"municipio": "Santa Leopoldina", "regiao_saude": "Metropolitana", "populacao_2022": "13076", "polio_2019": 92.6, "polio_2020": 83.7, "polio_2021": 78.5, "polio_2022": 71.3, "triplice_viral_2019": 87.0, "triplice_viral_2020": 69.3, "triplice_viral_2021": 77.6, "triplice_viral_2022": 80.6, "bcg_2022": 91.0, "meta_cobertura_pct": 95}, {"municipio": "Santa Maria de Jetib\u00e1", "regiao_saude": "Metropolitana", "populacao_2022": "40242", "polio_2019": 90.7, "polio_2020": 81.1, "polio_2021": 78.5, "polio_2022": 56.6, "triplice_viral_2019": 86.4, "triplice_viral_2020": 71.0, "triplice_viral_2021": 77.9, "triplice_viral_2022": 85.9, "bcg_2022": 93.6, "meta_cobertura_pct": 95}, {"municipio": "Santa Teresa", "regiao_saude": "Metropolitana", "populacao_2022": "24390", "polio_2019": 94.7, "polio_2020": 70.7, "polio_2021": 68.2, "polio_2022": 62.1, "triplice_viral_2019": 88.1, "triplice_viral_2020": 80.2, "triplice_viral_2021": 73.1, "triplice_viral_2022": 92.8, "bcg_2022": 96.0, "meta_cobertura_pct": 95}, {"municipio": "S\u00e3o Domingos do Norte", "regiao_saude": "Central Norte", "populacao_2022": "9203", "polio_2019": 82.1, "polio_2020": 78.0, "polio_2021": 64.2, "polio_2022": 62.4, "triplice_viral_2019": 83.3, "triplice_viral_2020": 70.8, "triplice_viral_2021": 75.9, "triplice_viral_2022": 87.4, "bcg_2022": 92.7, "meta_cobertura_pct": 95}, {"municipio": "S\u00e3o Gabriel da Palha", "regiao_saude": "Central Norte", "populacao_2022": "38014", "polio_2019": 93.3, "polio_2020": 85.3, "polio_2021": 70.5, "polio_2022": 60.7, "triplice_viral_2019": 87.8, "triplice_viral_2020": 73.8, "triplice_viral_2021": 74.4, "triplice_viral_2022": 87.0, "bcg_2022": 95.6, "meta_cobertura_pct": 95}, {"municipio": "S\u00e3o Jos\u00e9 do Cal\u00e7ado", "regiao_saude": "Sul", "populacao_2022": "10203", "polio_2019": 85.2, "polio_2020": 73.5, "polio_2021": 72.2, "polio_2022": 57.5, "triplice_viral_2019": 87.5, "triplice_viral_2020": 68.1, "triplice_viral_2021": 68.1, "triplice_viral_2022": 84.62, "bcg_2022": 90.9, "meta_cobertura_pct": 95}, {"municipio": "S\u00e3o Mateus", "regiao_saude": "Central Norte", "populacao_2022": "131491", "polio_2019": 96.5, "polio_2020": 73.5, "polio_2021": 75.1, "polio_2022": 65.5, "triplice_viral_2019": 88.6, "triplice_viral_2020": 70.4, "triplice_viral_2021": 86.9, "triplice_viral_2022": 83.7, "bcg_2022": 89.6, "meta_cobertura_pct": 95}, {"municipio": "S\u00e3o Roque do Cana\u00e3", "regiao_saude": "Central Serrana", "populacao_2022": "12602", "polio_2019": 118.95, "polio_2020": 117.89, "polio_2021": 106.42, "polio_2022": 111.11, "triplice_viral_2019": 117.89, "triplice_viral_2020": 148.42, "triplice_viral_2021": 125.69, "triplice_viral_2022": 93.52, "bcg_2022": 76.85, "meta_cobertura_pct": 95}, {"municipio": "Serra", "regiao_saude": "Metropolitana", "populacao_2022": "529583", "polio_2019": 101.3, "polio_2020": 75.3, "polio_2021": 69.9, "polio_2022": 72.5, "triplice_viral_2019": 91.1, "triplice_viral_2020": 73.5, "triplice_viral_2021": 79.6, "triplice_viral_2022": 86.3, "bcg_2022": 86.65, "meta_cobertura_pct": 95}, {"municipio": "Sooretama", "regiao_saude": "Central Norte", "populacao_2022": "26503", "polio_2019": 92.0, "polio_2020": 81.8, "polio_2021": 67.4, "polio_2022": 74.6, "triplice_viral_2019": 89.5, "triplice_viral_2020": 84.0, "triplice_viral_2021": 83.0, "triplice_viral_2022": 89.9, "bcg_2022": 94.5, "meta_cobertura_pct": 95}, {"municipio": "Vargem Alta", "regiao_saude": "Sul", "populacao_2022": "17803", "polio_2019": 84.6, "polio_2020": 69.8, "polio_2021": 67.6, "polio_2022": 59.2, "triplice_viral_2019": 93.0, "triplice_viral_2020": 77.7, "triplice_viral_2021": 71.2, "triplice_viral_2022": 84.7, "bcg_2022": 85.1, "meta_cobertura_pct": 95}, {"municipio": "Venda Nova do Imigrante", "regiao_saude": "Sudoeste", "populacao_2022": "26204", "polio_2019": 96.55, "polio_2020": 108.78, "polio_2021": 92.78, "polio_2022": 103.61, "triplice_viral_2019": 108.15, "triplice_viral_2020": 120.69, "triplice_viral_2021": 97.78, "triplice_viral_2022": 97.29, "bcg_2022": 156.33, "meta_cobertura_pct": 95}, {"municipio": "Viana", "regiao_saude": "Metropolitana", "populacao_2022": "79010", "polio_2019": 102.7, "polio_2020": 75.9, "polio_2021": 74.8, "polio_2022": 67.1, "triplice_viral_2019": 93.3, "triplice_viral_2020": 87.7, "triplice_viral_2021": 80.7, "triplice_viral_2022": 90.0, "bcg_2022": 89.3, "meta_cobertura_pct": 95}, {"municipio": "Vila Pav\u00e3o", "regiao_saude": "Central Norte", "populacao_2022": "9403", "polio_2019": 83.6, "polio_2020": 79.8, "polio_2021": 75.4, "polio_2022": 64.0, "triplice_viral_2019": 90.9, "triplice_viral_2020": 69.7, "triplice_viral_2021": 71.5, "triplice_viral_2022": 86.9, "bcg_2022": 87.9, "meta_cobertura_pct": 95}, {"municipio": "Vila Val\u00e9rio", "regiao_saude": "Noroeste", "populacao_2022": "14065", "polio_2019": 81.21, "polio_2020": 97.46, "polio_2021": 100.44, "polio_2022": 74.45, "triplice_viral_2019": 97.46, "triplice_viral_2020": 110.66, "triplice_viral_2021": 103.06, "triplice_viral_2022": 81.06, "bcg_2022": 45.37, "meta_cobertura_pct": 95}, {"municipio": "Vila Velha", "regiao_saude": "Metropolitana", "populacao_2022": "506395", "polio_2019": 94.0, "polio_2020": 80.6, "polio_2021": 70.4, "polio_2022": 64.0, "triplice_viral_2019": 89.6, "triplice_viral_2020": 79.6, "triplice_viral_2021": 85.8, "triplice_viral_2022": 86.3, "bcg_2022": 86.4, "meta_cobertura_pct": 95}, {"municipio": "Vit\u00f3ria", "regiao_saude": "Metropolitana", "populacao_2022": "369534", "polio_2019": 91.02, "polio_2020": 81.03, "polio_2021": 78.05, "polio_2022": 77.54, "triplice_viral_2019": 95.6, "triplice_viral_2020": 81.37, "triplice_viral_2021": 82.8, "triplice_viral_2022": 74.61, "bcg_2022": 55.12, "meta_cobertura_pct": 95}];
+    const dataLei = [{"Munic\u00edpio": "Afonso Cl\u00e1udio", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "30,603", "Leitos SUS (2019)": 44, "Leitos SUS (2021)": 46, "Leitos SUS (2023)": 45, "Leitos N\u00e3o SUS (2023)": 19, "Total Leitos (2023)": 64, "Leitos/Mil Hab (2023)": 2.01, "Ref. OMS": 3}, {"Munic\u00edpio": "\u00c1gua Doce do Norte", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "12,402", "Leitos SUS (2019)": 10, "Leitos SUS (2021)": 11, "Leitos SUS (2023)": 11, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 12, "Leitos/Mil Hab (2023)": 0.97, "Ref. OMS": 3}, {"Munic\u00edpio": "\u00c1guia Branca", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "9,714", "Leitos SUS (2019)": 7, "Leitos SUS (2021)": 7, "Leitos SUS (2023)": 10, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 11, "Leitos/Mil Hab (2023)": 1.13, "Ref. OMS": 3}, {"Munic\u00edpio": "Alegre", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "31,403", "Leitos SUS (2019)": 38, "Leitos SUS (2021)": 37, "Leitos SUS (2023)": 35, "Leitos N\u00e3o SUS (2023)": 7, "Total Leitos (2023)": 42, "Leitos/Mil Hab (2023)": 1.34, "Ref. OMS": 3}, {"Munic\u00edpio": "Alfredo Chaves", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "13,836", "Leitos SUS (2019)": 0, "Leitos SUS (2021)": 0, "Leitos SUS (2023)": 0, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 0, "Leitos/Mil Hab (2023)": 0.0, "Ref. OMS": 3}, {"Munic\u00edpio": "Alto Rio Novo", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "7,831", "Leitos SUS (2019)": 7, "Leitos SUS (2021)": 7, "Leitos SUS (2023)": 6, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 6, "Leitos/Mil Hab (2023)": 0.77, "Ref. OMS": 3}, {"Munic\u00edpio": "Anchieta", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "26,703", "Leitos SUS (2019)": 29, "Leitos SUS (2021)": 29, "Leitos SUS (2023)": 28, "Leitos N\u00e3o SUS (2023)": 5, "Total Leitos (2023)": 33, "Leitos/Mil Hab (2023)": 1.24, "Ref. OMS": 3}, {"Munic\u00edpio": "Apiac\u00e1", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "8,203", "Leitos SUS (2019)": 9, "Leitos SUS (2021)": 7, "Leitos SUS (2023)": 7, "Leitos N\u00e3o SUS (2023)": 2, "Total Leitos (2023)": 9, "Leitos/Mil Hab (2023)": 1.1, "Ref. OMS": 3}, {"Munic\u00edpio": "Aracruz", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "108,416", "Leitos SUS (2019)": 166, "Leitos SUS (2021)": 160, "Leitos SUS (2023)": 159, "Leitos N\u00e3o SUS (2023)": 69, "Total Leitos (2023)": 228, "Leitos/Mil Hab (2023)": 2.1, "Ref. OMS": 3}, {"Munic\u00edpio": "At\u00edlio Viv\u00e1cqua", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "12,060", "Leitos SUS (2019)": 10, "Leitos SUS (2021)": 10, "Leitos SUS (2023)": 11, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 11, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Baixo Guandu", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "29,803", "Leitos SUS (2019)": 28, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 27, "Leitos N\u00e3o SUS (2023)": 5, "Total Leitos (2023)": 32, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Barra de S\u00e3o Francisco", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "42,498", "Leitos SUS (2019)": 61, "Leitos SUS (2021)": 61, "Leitos SUS (2023)": 61, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 61, "Leitos/Mil Hab (2023)": 1.44, "Ref. OMS": 3}, {"Munic\u00edpio": "Boa Esperan\u00e7a", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "19,203", "Leitos SUS (2019)": 17, "Leitos SUS (2021)": 16, "Leitos SUS (2023)": 17, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 18, "Leitos/Mil Hab (2023)": 0.94, "Ref. OMS": 3}, {"Munic\u00edpio": "Bom Jesus do Norte", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "9,803", "Leitos SUS (2019)": 10, "Leitos SUS (2021)": 9, "Leitos SUS (2023)": 10, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 13, "Leitos/Mil Hab (2023)": 1.33, "Ref. OMS": 3}, {"Munic\u00edpio": "Brejetuba", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "12,987", "Leitos SUS (2019)": 17, "Leitos SUS (2021)": 21, "Leitos SUS (2023)": 20, "Leitos N\u00e3o SUS (2023)": 9, "Total Leitos (2023)": 29, "Leitos/Mil Hab (2023)": 2.23, "Ref. OMS": 3}, {"Munic\u00edpio": "Cachoeiro de Itapemirim", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "185,784", "Leitos SUS (2019)": 354, "Leitos SUS (2021)": 482, "Leitos SUS (2023)": 20, "Leitos N\u00e3o SUS (2023)": 9, "Total Leitos (2023)": 29, "Leitos/Mil Hab (2023)": 2.23, "Ref. OMS": 3}, {"Munic\u00edpio": "Cariacica", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "406,542", "Leitos SUS (2019)": 618, "Leitos SUS (2021)": 600, "Leitos SUS (2023)": 0, "Leitos N\u00e3o SUS (2023)": 264, "Total Leitos (2023)": 264, "Leitos/Mil Hab (2023)": 0.65, "Ref. OMS": 3}, {"Munic\u00edpio": "Castelo", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "37,803", "Leitos SUS (2019)": 45, "Leitos SUS (2021)": 44, "Leitos SUS (2023)": 40, "Leitos N\u00e3o SUS (2023)": 9, "Total Leitos (2023)": 49, "Leitos/Mil Hab (2023)": 1.1, "Ref. OMS": 3}, {"Munic\u00edpio": "Colatina", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "119,992", "Leitos SUS (2019)": 336, "Leitos SUS (2021)": 356, "Leitos SUS (2023)": 40, "Leitos N\u00e3o SUS (2023)": 9, "Total Leitos (2023)": 49, "Leitos/Mil Hab (2023)": 1.3, "Ref. OMS": 3}, {"Munic\u00edpio": "Concei\u00e7\u00e3o da Barra", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "45,280", "Leitos SUS (2019)": 40, "Leitos SUS (2021)": 40, "Leitos SUS (2023)": 39, "Leitos N\u00e3o SUS (2023)": 5, "Total Leitos (2023)": 44, "Leitos/Mil Hab (2023)": 0.97, "Ref. OMS": 3}, {"Munic\u00edpio": "Concei\u00e7\u00e3o do Castelo", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "17,482", "Leitos SUS (2019)": 26, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 26, "Leitos N\u00e3o SUS (2023)": 10, "Total Leitos (2023)": 36, "Leitos/Mil Hab (2023)": 2.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Divino de S\u00e3o Louren\u00e7o", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "5,803", "Leitos SUS (2019)": 7, "Leitos SUS (2021)": 5, "Leitos SUS (2023)": 7, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 8, "Leitos/Mil Hab (2023)": 1.38, "Ref. OMS": 3}, {"Munic\u00edpio": "Domingos Martins", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "33,551", "Leitos SUS (2019)": 93, "Leitos SUS (2021)": 95, "Leitos SUS (2023)": 95, "Leitos N\u00e3o SUS (2023)": 7, "Total Leitos (2023)": 102, "Leitos/Mil Hab (2023)": 1.38, "Ref. OMS": 3}, {"Munic\u00edpio": "Dores do Rio Preto", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "7,803", "Leitos SUS (2019)": 8, "Leitos SUS (2021)": 10, "Leitos SUS (2023)": 6, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 6, "Leitos/Mil Hab (2023)": 0.77, "Ref. OMS": 3}, {"Munic\u00edpio": "Ecoporanga", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "25,314", "Leitos SUS (2019)": 23, "Leitos SUS (2021)": 19, "Leitos SUS (2023)": 21, "Leitos N\u00e3o SUS (2023)": 4, "Total Leitos (2023)": 25, "Leitos/Mil Hab (2023)": 0.99, "Ref. OMS": 3}, {"Munic\u00edpio": "Fund\u00e3o", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "21,194", "Leitos SUS (2019)": 11, "Leitos SUS (2021)": 11, "Leitos SUS (2023)": 21, "Leitos N\u00e3o SUS (2023)": 4, "Total Leitos (2023)": 25, "Leitos/Mil Hab (2023)": 0.99, "Ref. OMS": 3}, {"Munic\u00edpio": "Governador Lindenberg", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "11,620", "Leitos SUS (2019)": 9, "Leitos SUS (2021)": 10, "Leitos SUS (2023)": 11, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 11, "Leitos/Mil Hab (2023)": 1.0, "Ref. OMS": 3}, {"Munic\u00edpio": "Gua\u00e7u\u00ed", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "24,603", "Leitos SUS (2019)": 26, "Leitos SUS (2021)": 25, "Leitos SUS (2023)": 26, "Leitos N\u00e3o SUS (2023)": 7, "Total Leitos (2023)": 33, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Guarapari", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "124,656", "Leitos SUS (2019)": 59, "Leitos SUS (2021)": 59, "Leitos SUS (2023)": 58, "Leitos N\u00e3o SUS (2023)": 12, "Total Leitos (2023)": 70, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Ibatiba", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "21,304", "Leitos SUS (2019)": 30, "Leitos SUS (2021)": 32, "Leitos SUS (2023)": 29, "Leitos N\u00e3o SUS (2023)": 14, "Total Leitos (2023)": 43, "Leitos/Mil Hab (2023)": 2.02, "Ref. OMS": 3}, {"Munic\u00edpio": "Ibira\u00e7u", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "12,890", "Leitos SUS (2019)": 21, "Leitos SUS (2021)": 20, "Leitos SUS (2023)": 19, "Leitos N\u00e3o SUS (2023)": 9, "Total Leitos (2023)": 28, "Leitos/Mil Hab (2023)": 2.17, "Ref. OMS": 3}, {"Munic\u00edpio": "Ibitirama", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "9,550", "Leitos SUS (2019)": 0, "Leitos SUS (2021)": 0, "Leitos SUS (2023)": 0, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 0, "Leitos/Mil Hab (2023)": 0.0, "Ref. OMS": 3}, {"Munic\u00edpio": "Iconha", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "13,803", "Leitos SUS (2019)": 13, "Leitos SUS (2021)": 14, "Leitos SUS (2023)": 13, "Leitos N\u00e3o SUS (2023)": 4, "Total Leitos (2023)": 17, "Leitos/Mil Hab (2023)": 1.23, "Ref. OMS": 3}, {"Munic\u00edpio": "Irupi", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "12,403", "Leitos SUS (2019)": 13, "Leitos SUS (2021)": 13, "Leitos SUS (2023)": 14, "Leitos N\u00e3o SUS (2023)": 2, "Total Leitos (2023)": 16, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Itagua\u00e7u", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "14,320", "Leitos SUS (2019)": 20, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 21, "Leitos N\u00e3o SUS (2023)": 9, "Total Leitos (2023)": 30, "Leitos/Mil Hab (2023)": 2.09, "Ref. OMS": 3}, {"Munic\u00edpio": "Itapemirim", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "34,493", "Leitos SUS (2019)": 120, "Leitos SUS (2021)": 84, "Leitos SUS (2023)": 14, "Leitos N\u00e3o SUS (2023)": 2, "Total Leitos (2023)": 16, "Leitos/Mil Hab (2023)": 1.29, "Ref. OMS": 3}, {"Munic\u00edpio": "Itarana", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "11,018", "Leitos SUS (2019)": 18, "Leitos SUS (2021)": 14, "Leitos SUS (2023)": 13, "Leitos N\u00e3o SUS (2023)": 7, "Total Leitos (2023)": 20, "Leitos/Mil Hab (2023)": 1.82, "Ref. OMS": 3}, {"Munic\u00edpio": "I\u00fana", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "23,403", "Leitos SUS (2019)": 25, "Leitos SUS (2021)": 24, "Leitos SUS (2023)": 24, "Leitos N\u00e3o SUS (2023)": 6, "Total Leitos (2023)": 30, "Leitos/Mil Hab (2023)": 1.28, "Ref. OMS": 3}, {"Munic\u00edpio": "Jaguar\u00e9", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "27,503", "Leitos SUS (2019)": 25, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 24, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 27, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Jer\u00f4nimo Monteiro", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "11,803", "Leitos SUS (2019)": 13, "Leitos SUS (2021)": 15, "Leitos SUS (2023)": 12, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 15, "Leitos/Mil Hab (2023)": 1.27, "Ref. OMS": 3}, {"Munic\u00edpio": "Jo\u00e3o Neiva", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "16,187", "Leitos SUS (2019)": 32, "Leitos SUS (2021)": 33, "Leitos SUS (2023)": 24, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 27, "Leitos/Mil Hab (2023)": 0.98, "Ref. OMS": 3}, {"Munic\u00edpio": "Laranja da Terra", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "11,640", "Leitos SUS (2019)": 16, "Leitos SUS (2021)": 15, "Leitos SUS (2023)": 16, "Leitos N\u00e3o SUS (2023)": 8, "Total Leitos (2023)": 24, "Leitos/Mil Hab (2023)": 2.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Linhares", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "166,786", "Leitos SUS (2019)": 154, "Leitos SUS (2021)": 268, "Leitos SUS (2023)": 33, "Leitos N\u00e3o SUS (2023)": 18, "Total Leitos (2023)": 51, "Leitos/Mil Hab (2023)": 0.31, "Ref. OMS": 3}, {"Munic\u00edpio": "Manten\u00f3polis", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "12,259", "Leitos SUS (2019)": 0, "Leitos SUS (2021)": 0, "Leitos SUS (2023)": 0, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 0, "Leitos/Mil Hab (2023)": 0.0, "Ref. OMS": 3}, {"Munic\u00edpio": "Marata\u00edzes", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "39,203", "Leitos SUS (2019)": 45, "Leitos SUS (2021)": 45, "Leitos SUS (2023)": 42, "Leitos N\u00e3o SUS (2023)": 10, "Total Leitos (2023)": 52, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Marechal Floriano", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "16,214", "Leitos SUS (2019)": 154, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 22, "Leitos N\u00e3o SUS (2023)": 11, "Total Leitos (2023)": 33, "Leitos/Mil Hab (2023)": 2.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Maril\u00e2ndia", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "11,402", "Leitos SUS (2019)": 10, "Leitos SUS (2021)": 10, "Leitos SUS (2023)": 7, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 8, "Leitos/Mil Hab (2023)": 0.7, "Ref. OMS": 3}, {"Munic\u00edpio": "Mimoso do Sul", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "26,803", "Leitos SUS (2019)": 31, "Leitos SUS (2021)": 30, "Leitos SUS (2023)": 31, "Leitos N\u00e3o SUS (2023)": 6, "Total Leitos (2023)": 37, "Leitos/Mil Hab (2023)": 1.38, "Ref. OMS": 3}, {"Munic\u00edpio": "Montanha", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "19,128", "Leitos SUS (2019)": 32, "Leitos SUS (2021)": 32, "Leitos SUS (2023)": 22, "Leitos N\u00e3o SUS (2023)": 11, "Total Leitos (2023)": 33, "Leitos/Mil Hab (2023)": 2.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Mucurici", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "7,803", "Leitos SUS (2019)": 7, "Leitos SUS (2021)": 5, "Leitos SUS (2023)": 8, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 8, "Leitos/Mil Hab (2023)": 1.03, "Ref. OMS": 3}, {"Munic\u00edpio": "Muniz Freire", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "17,351", "Leitos SUS (2019)": 34, "Leitos SUS (2021)": 30, "Leitos SUS (2023)": 31, "Leitos N\u00e3o SUS (2023)": 6, "Total Leitos (2023)": 37, "Leitos/Mil Hab (2023)": 1.38, "Ref. OMS": 3}, {"Munic\u00edpio": "Muqui", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "14,603", "Leitos SUS (2019)": 14, "Leitos SUS (2021)": 16, "Leitos SUS (2023)": 15, "Leitos N\u00e3o SUS (2023)": 2, "Total Leitos (2023)": 17, "Leitos/Mil Hab (2023)": 1.16, "Ref. OMS": 3}, {"Munic\u00edpio": "Nova Ven\u00e9cia", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "47,214", "Leitos SUS (2019)": 7, "Leitos SUS (2021)": 39, "Leitos SUS (2023)": 42, "Leitos N\u00e3o SUS (2023)": 6, "Total Leitos (2023)": 48, "Leitos/Mil Hab (2023)": 1.02, "Ref. OMS": 3}, {"Munic\u00edpio": "Pancas", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "22,814", "Leitos SUS (2019)": 20, "Leitos SUS (2021)": 19, "Leitos SUS (2023)": 19, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 22, "Leitos/Mil Hab (2023)": 0.96, "Ref. OMS": 3}, {"Munic\u00edpio": "Pedro Can\u00e1rio", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "26,503", "Leitos SUS (2019)": 23, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 21, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 24, "Leitos/Mil Hab (2023)": 0.91, "Ref. OMS": 3}, {"Munic\u00edpio": "Pinheiros", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "24,803", "Leitos SUS (2019)": 22, "Leitos SUS (2021)": 20, "Leitos SUS (2023)": 19, "Leitos N\u00e3o SUS (2023)": 2, "Total Leitos (2023)": 21, "Leitos/Mil Hab (2023)": 0.85, "Ref. OMS": 3}, {"Munic\u00edpio": "Pi\u00fama", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "24,603", "Leitos SUS (2019)": 30, "Leitos SUS (2021)": 28, "Leitos SUS (2023)": 28, "Leitos N\u00e3o SUS (2023)": 6, "Total Leitos (2023)": 34, "Leitos/Mil Hab (2023)": 1.38, "Ref. OMS": 3}, {"Munic\u00edpio": "Ponto Belo", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "8,904", "Leitos SUS (2019)": 8, "Leitos SUS (2021)": 7, "Leitos SUS (2023)": 6, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 7, "Leitos/Mil Hab (2023)": 1.1, "Ref. OMS": 3}, {"Munic\u00edpio": "Presidente Kennedy", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "11,203", "Leitos SUS (2019)": 14, "Leitos SUS (2021)": 11, "Leitos SUS (2023)": 14, "Leitos N\u00e3o SUS (2023)": 1, "Total Leitos (2023)": 15, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Rio Bananal", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "18,519", "Leitos SUS (2019)": 26, "Leitos SUS (2021)": 26, "Leitos SUS (2023)": 28, "Leitos N\u00e3o SUS (2023)": 31, "Total Leitos (2023)": 34, "Leitos/Mil Hab (2023)": 1.01, "Ref. OMS": 3}, {"Munic\u00edpio": "Rio Novo do Sul", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "12,603", "Leitos SUS (2019)": 16, "Leitos SUS (2021)": 15, "Leitos SUS (2023)": 15, "Leitos N\u00e3o SUS (2023)": 4, "Total Leitos (2023)": 19, "Leitos/Mil Hab (2023)": 1.51, "Ref. OMS": 3}, {"Munic\u00edpio": "Santa Leopoldina", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "13,076", "Leitos SUS (2019)": 21, "Leitos SUS (2021)": 18, "Leitos SUS (2023)": 25, "Leitos N\u00e3o SUS (2023)": 7, "Total Leitos (2023)": 32, "Leitos/Mil Hab (2023)": 2.45, "Ref. OMS": 3}, {"Munic\u00edpio": "Santa Maria de Jetib\u00e1", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "40,242", "Leitos SUS (2019)": 63, "Leitos SUS (2021)": 57, "Leitos SUS (2023)": 59, "Leitos N\u00e3o SUS (2023)": 26, "Total Leitos (2023)": 85, "Leitos/Mil Hab (2023)": 2.11, "Ref. OMS": 3}, {"Munic\u00edpio": "Santa Teresa", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "24,390", "Leitos SUS (2019)": 38, "Leitos SUS (2021)": 38, "Leitos SUS (2023)": 35, "Leitos N\u00e3o SUS (2023)": 15, "Total Leitos (2023)": 50, "Leitos/Mil Hab (2023)": 2.05, "Ref. OMS": 3}, {"Munic\u00edpio": "S\u00e3o Domingos do Norte", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "9,203", "Leitos SUS (2019)": 9, "Leitos SUS (2021)": 6, "Leitos SUS (2023)": 7, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 7, "Leitos/Mil Hab (2023)": 0.76, "Ref. OMS": 3}, {"Munic\u00edpio": "S\u00e3o Gabriel da Palha", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "38,014", "Leitos SUS (2019)": 32, "Leitos SUS (2021)": 30, "Leitos SUS (2023)": 30, "Leitos N\u00e3o SUS (2023)": 4, "Total Leitos (2023)": 34, "Leitos/Mil Hab (2023)": 0.89, "Ref. OMS": 3}, {"Munic\u00edpio": "S\u00e3o Jos\u00e9 do Cal\u00e7ado", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "10,203", "Leitos SUS (2019)": 12, "Leitos SUS (2021)": 12, "Leitos SUS (2023)": 10, "Leitos N\u00e3o SUS (2023)": 3, "Total Leitos (2023)": 13, "Leitos/Mil Hab (2023)": 1.1, "Ref. OMS": 3}, {"Munic\u00edpio": "S\u00e3o Mateus", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "131,491", "Leitos SUS (2019)": 117, "Leitos SUS (2021)": 115, "Leitos SUS (2023)": 111, "Leitos N\u00e3o SUS (2023)": 20, "Total Leitos (2023)": 131, "Leitos/Mil Hab (2023)": 1.0, "Ref. OMS": 3}, {"Munic\u00edpio": "S\u00e3o Roque do Cana\u00e3", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "10,886", "Leitos SUS (2019)": 0, "Leitos SUS (2021)": 0, "Leitos SUS (2023)": 0, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 0, "Leitos/Mil Hab (2023)": 1.1, "Ref. OMS": 3}, {"Munic\u00edpio": "Serra", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "529,583", "Leitos SUS (2019)": 805, "Leitos SUS (2021)": 781, "Leitos SUS (2023)": 765, "Leitos N\u00e3o SUS (2023)": 343, "Total Leitos (2023)": 1108, "Leitos/Mil Hab (2023)": 2.09, "Ref. OMS": 3}, {"Munic\u00edpio": "Sooretama", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "26,503", "Leitos SUS (2019)": 22, "Leitos SUS (2021)": 23, "Leitos SUS (2023)": 17, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 17, "Leitos/Mil Hab (2023)": 0.64, "Ref. OMS": 3}, {"Munic\u00edpio": "Vargem Alta", "Regi\u00e3o de Sa\u00fade": "Sul", "Popula\u00e7\u00e3o (2022)": "17,803", "Leitos SUS (2019)": 18, "Leitos SUS (2021)": 18, "Leitos SUS (2023)": 21, "Leitos N\u00e3o SUS (2023)": 5, "Total Leitos (2023)": 26, "Leitos/Mil Hab (2023)": 1.46, "Ref. OMS": 3}, {"Munic\u00edpio": "Venda Nova do Imigrante", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "25,330", "Leitos SUS (2019)": 61, "Leitos SUS (2021)": 64, "Leitos SUS (2023)": 69, "Leitos N\u00e3o SUS (2023)": 15, "Total Leitos (2023)": 84, "Leitos/Mil Hab (2023)": 3.32, "Ref. OMS": 3}, {"Munic\u00edpio": "Viana", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "79,010", "Leitos SUS (2019)": 121, "Leitos SUS (2021)": 118, "Leitos SUS (2023)": 115, "Leitos N\u00e3o SUS (2023)": 51, "Total Leitos (2023)": 166, "Leitos/Mil Hab (2023)": 2.1, "Ref. OMS": 3}, {"Munic\u00edpio": "Vila Pav\u00e3o", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "9,403", "Leitos SUS (2019)": 8, "Leitos SUS (2021)": 7, "Leitos SUS (2023)": 9, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 9, "Leitos/Mil Hab (2023)": 0.96, "Ref. OMS": 3}, {"Munic\u00edpio": "Vila Val\u00e9rio", "Regi\u00e3o de Sa\u00fade": "Central Norte", "Popula\u00e7\u00e3o (2022)": "13,728", "Leitos SUS (2019)": 0, "Leitos SUS (2021)": 0, "Leitos SUS (2023)": 0, "Leitos N\u00e3o SUS (2023)": 0, "Total Leitos (2023)": 0, "Leitos/Mil Hab (2023)": 0.0, "Ref. OMS": 3}, {"Munic\u00edpio": "Vila Velha", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "506,395", "Leitos SUS (2019)": 771, "Leitos SUS (2021)": 750, "Leitos SUS (2023)": 734, "Leitos N\u00e3o SUS (2023)": 330, "Total Leitos (2023)": 1064, "Leitos/Mil Hab (2023)": 2.1, "Ref. OMS": 3}, {"Munic\u00edpio": "Vit\u00f3ria", "Regi\u00e3o de Sa\u00fade": "Metropolitana", "Popula\u00e7\u00e3o (2022)": "358,267", "Leitos SUS (2019)": 1214, "Leitos SUS (2021)": 1088, "Leitos SUS (2023)": 1186, "Leitos N\u00e3o SUS (2023)": 651, "Total Leitos (2023)": 1837, "Leitos/Mil Hab (2023)": 5.13, "Ref. OMS": 3}];
+    const avgVac = [{"regiao_saude": "Central Norte", "polio_2022": 64.59, "triplice_viral_2022": 85.59, "bcg_2022": 86.14}, {"regiao_saude": "Central Serrana", "polio_2022": 111.11, "triplice_viral_2022": 93.52, "bcg_2022": 76.85}, {"regiao_saude": "Centro-oeste", "polio_2022": 44.79, "triplice_viral_2022": 43.6, "bcg_2022": 14.87}, {"regiao_saude": "Metropolitana", "polio_2022": 68.45, "triplice_viral_2022": 84.22, "bcg_2022": 85.91}, {"regiao_saude": "Nordeste", "polio_2022": 75.0, "triplice_viral_2022": 79.79, "bcg_2022": 50.0}, {"regiao_saude": "Noroeste", "polio_2022": 72.94, "triplice_viral_2022": 77.74, "bcg_2022": 56.24}, {"regiao_saude": "Norte", "polio_2022": 107.53, "triplice_viral_2022": 97.39, "bcg_2022": 47.15}, {"regiao_saude": "Oeste", "polio_2022": 50.83, "triplice_viral_2022": 70.17, "bcg_2022": 28.73}, {"regiao_saude": "Sudoeste", "polio_2022": 80.83, "triplice_viral_2022": 83.19, "bcg_2022": 86.28}, {"regiao_saude": "Sul", "polio_2022": 69.81, "triplice_viral_2022": 86.34, "bcg_2022": 86.71}];
+    const avgLei = [{"Regi\u00e3o de Sa\u00fade": "Central Norte", "Leitos/Mil Hab (2023)": 0.92}, {"Regi\u00e3o de Sa\u00fade": "Metropolitana", "Leitos/Mil Hab (2023)": 2.04}, {"Regi\u00e3o de Sa\u00fade": "Sul", "Leitos/Mil Hab (2023)": 1.15}];
+
+    // Função de cor para vacinas (Badges Visuais)
+    function getVacStatus(val) {
+        if (val >= 95) return `<span class="status-badge status-good">🟢 ${val}%</span>`;
+        if (val >= 80) return `<span class="status-badge status-warn">🟡 ${val}%</span>`;
+        return `<span class="status-badge status-crit">🔴 ${val}%</span>`;
+    }
+
+    function init() {
+        // Tabela de Vacinação
+        const vBody = document.getElementById('vacBody');
+        dataVac.forEach(r => {
+            vBody.innerHTML += `<tr>
+                <td><span class="municipio-nome">${r.municipio}</span></td>
+                <td><span class="regiao-tag">${r.regiao_saude}</span></td>
+                <td>${getVacStatus(r.polio_2022)}</td>
+                <td>${getVacStatus(r.triplice_viral_2022)}</td>
+                <td>${getVacStatus(r.bcg_2022)}</td>
+                <td><span class="status-badge status-neutral">🎯 ${r.meta_cobertura_pct}%</span></td>
+            </tr>`;
+        });
+
+        // Tabela de Leitos
+        const lBody = document.getElementById('leiBody');
+        dataLei.forEach(r => {
+            const val = parseFloat(String(r['Leitos/Mil Hab (2023)']).replace(',', '.'));
+            let statusBadge = val >= 3 
+                ? '<span class="status-badge status-good">✅ Ideal</span>' 
+                : (val >= 1 ? '<span class="status-badge status-warn">⚠️ Regular</span>' : '<span class="status-badge status-crit">🚨 Alerta</span>');
+            
+            lBody.innerHTML += `<tr>
+                <td><span class="municipio-nome">${r['Município']}</span></td>
+                <td><span class="regiao-tag">${r['Região de Saúde']}</span></td>
+                <td><strong>${r['Total Leitos (2023)']}</strong></td>
+                <td>${val.toFixed(2)}</td>
+                <td>${statusBadge}</td>
+            </tr>`;
+        });
+
+        // Tabela de Resumo Regional
+        const sBody = document.getElementById('summaryBody');
+        avgVac.forEach((v) => {
+            const l = avgLei.find(x => x['Região de Saúde'] == v.regiao_saude) || { 'Leitos/Mil Hab (2023)': 0 };
+            const isGood = v.polio_2022 >= 95;
+            
+            sBody.innerHTML += `<tr>
+                <td><span class="municipio-nome">${v.regiao_saude}</span></td>
+                <td>${getVacStatus(v.polio_2022.toFixed(1))}</td>
+                <td>${getVacStatus(v.triplice_viral_2022.toFixed(1))}</td>
+                <td>${getVacStatus(v.bcg_2022.toFixed(1))}</td>
+                <td><strong>${l['Leitos/Mil Hab (2023)'].toFixed(2)}</strong></td>
+                <td>${isGood ? '<span class="status-badge status-good">✔️ Ideal</span>' : '<span class="status-badge status-crit">Atenção</span>'}</td>
+            </tr>`;
+        });
+
+        renderCharts();
+    }
+
+    function renderCharts() {
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        new Chart(document.getElementById('chartVacina'), {
+            type: 'bar',
+            data: {
+                labels: avgVac.map(d => d.regiao_saude),
+                datasets: [
+                    { label: 'Pólio', data: avgVac.map(d => d.polio_2022), backgroundColor: '#3b82f6', borderRadius: 4 }, 
+                    { label: 'Tríplice', data: avgVac.map(d => d.triplice_viral_2022), backgroundColor: '#10b981', borderRadius: 4 },
+                    { label: 'BCG', data: avgVac.map(d => d.bcg_2022), backgroundColor: '#f59e0b', borderRadius: 4 }
+                ]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { 
+                    y: { grid: { borderDash: [4, 4], color: '#e2e8f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('chartLeitos'), {
+            type: 'line',
+            data: {
+                labels: avgLei.map(d => d['Região de Saúde']),
+                datasets: [{
+                    label: 'Leitos/1k Hab.',
+                    data: avgLei.map(d => d['Leitos/Mil Hab (2023)']),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#2563eb',
+                    pointRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { 
+                    y: { grid: { borderDash: [4, 4], color: '#e2e8f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function showSection(id, btn) {
+        document.querySelectorAll('.table-section').forEach(s => {
+            s.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        
+        document.getElementById(id).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function filterTable(inputId, tableId) {
+        const input = document.getElementById(inputId);
+        const filter = input.value.toUpperCase();
+        const rows = document.getElementById(tableId).getElementsByTagName('tr');
+        for (let i = 1; i < rows.length; i++) {
+            const td = rows[i].getElementsByTagName('td')[0];
+            if (td) {
+                if (td.innerText.toUpperCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
